@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 
 def conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ksize, pool_strides):
@@ -13,13 +14,20 @@ def conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ks
     : return: A tensor that represents convolution and max pooling of x_tensor
     """
     depth_input = x_tensor.get_shape().as_list()[3]
-    w_conv = tf.Variable(tf.random_normal([conv_ksize[0], conv_ksize[1], depth_input, conv_num_outputs]))
-    bias_conv = tf.Variable(tf.random_normal([conv_num_outputs]))
-    x_tensor = tf.nn.conv2d(x_tensor, w_conv, strides=[1, conv_strides[0], conv_strides[1], 1], padding='SAME')
+    w_conv = tf.Variable(tf.truncated_normal([conv_ksize[0], conv_ksize[1], depth_input, conv_num_outputs],
+                                             stddev=.05))
+    bias_conv = tf.Variable(tf.zeros(conv_num_outputs))
+
+    x_tensor = tf.nn.conv2d(x_tensor, w_conv,
+                            strides=[1, conv_strides[0], conv_strides[1], 1],
+                            padding='SAME')
     x_tensor = tf.nn.bias_add(x_tensor, bias_conv)
     x_tensor = tf.nn.relu(x_tensor)
-    x_tensor = tf.nn.max_pool(x_tensor, ksize=[1, pool_ksize[0], pool_ksize[1], 1],
-                              strides=[1, pool_strides[0], pool_strides[1], 1], padding='SAME')
+
+    x_tensor = tf.nn.max_pool(x_tensor,
+                              ksize=[1, pool_ksize[0], pool_ksize[1], 1],
+                              strides=[1, pool_strides[0], pool_strides[1], 1],
+                              padding='SAME')
     return x_tensor
 
 
@@ -30,7 +38,8 @@ def flatten(x_tensor):
     : return: A tensor of size (Batch Size, Flattened Image Size).
     """
     x_shape = x_tensor.get_shape().as_list()
-    return tf.reshape(x_tensor, [-1, x_shape[1] * x_shape[2] * x_shape[3]])
+    batch_size = tf.shape(x_tensor)[0]  # -1
+    return tf.reshape(x_tensor, [batch_size, x_shape[1] * x_shape[2] * x_shape[3]])
 
 
 def fully_conn(x_tensor, num_outputs):
@@ -40,9 +49,10 @@ def fully_conn(x_tensor, num_outputs):
     : num_outputs: The number of output that the new tensor should be.
     : return: A 2-D tensor where the second dimension is num_outputs.
     """
-    x_shape = x_tensor.get_shape().as_list()
-    w_fu = tf.Variable(tf.random_normal([x_shape[1], num_outputs]))
-    bias_fu = tf.Variable(tf.random_normal([num_outputs]))
+    flattened_shape = np.array(x_tensor.get_shape().as_list()[1:]).prod()
+    w_fu = tf.Variable(tf.truncated_normal([flattened_shape, num_outputs],
+                                           stddev=.05))
+    bias_fu = tf.Variable(tf.zeros(num_outputs))
 
     x_tensor = tf.add(tf.matmul(x_tensor, w_fu), bias_fu)
     return tf.nn.relu(x_tensor)
@@ -56,6 +66,7 @@ def output(x_tensor, num_outputs):
     : return: A 2-D tensor where the second dimension is num_outputs.
     """
     x_shape = x_tensor.get_shape().as_list()
-    w_out = tf.Variable(tf.random_normal([x_shape[1], num_outputs]))
-    bias_out = tf.Variable(tf.random_normal([num_outputs]))
+    w_out = tf.Variable(tf.truncated_normal([x_shape[1], num_outputs],
+                                            stddev=.05))
+    bias_out = tf.Variable(tf.zeros(num_outputs))
     return tf.add(tf.matmul(x_tensor, w_out), bias_out)

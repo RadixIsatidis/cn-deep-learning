@@ -2,7 +2,7 @@ import tensorflow as tf
 from src.con_pool import conv2d_maxpool, flatten, fully_conn, output
 
 
-def conv_net(x, keep_prob, init_conv_num_outputs=32, output_fully=1024):
+def conv_net(x, keep_prob, init_conv_num_outputs=64, init_output_fully=1024):
     """
     Create a convolutional neural network model
     : x: Placeholder tensor that holds image data.
@@ -14,8 +14,13 @@ def conv_net(x, keep_prob, init_conv_num_outputs=32, output_fully=1024):
     # Function Definition from Above:
     #    conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ksize, pool_strides)
     for idx in range(1, 4):
-        conv_num_outputs = idx * init_conv_num_outputs
-        x = conv2d_maxpool(x, conv_num_outputs, (5, 5), (1, 1), (2, 2), (2, 2))
+        conv_num_outputs = init_conv_num_outputs  # idx * init_conv_num_outputs
+        x = conv2d_maxpool(x,
+                           conv_num_outputs=conv_num_outputs,
+                           conv_ksize=(3, 3),
+                           conv_strides=(1, 1),
+                           pool_ksize=(2, 2),
+                           pool_strides=(2, 2))
 
     # TODO: Apply a Flatten Layer
     # Function Definition from Above:
@@ -26,9 +31,11 @@ def conv_net(x, keep_prob, init_conv_num_outputs=32, output_fully=1024):
     #    Play around with different number of outputs
     # Function Definition from Above:
     #   fully_conn(x_tensor, num_outputs)
-    for idx in range(1, 4):
+    for idx in range(1, 3):
+        output_fully = int(init_output_fully / idx)
         x = fully_conn(x, output_fully)
-        x = tf.nn.dropout(x, keep_prob)
+
+    x = tf.nn.dropout(x, keep_prob)
 
     # TODO: Apply an Output Layer
     #    Set this to the number of classes

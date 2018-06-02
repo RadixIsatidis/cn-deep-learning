@@ -32,8 +32,8 @@ optimizer = tf.train.AdamOptimizer().minimize(cost)
 correct_pred = tf.equal(tf.argmax(logits, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
 
-epochs = 1
-batch_size = 64
+epochs = 100
+batch_size = 256
 keep_probability = .75
 
 
@@ -75,9 +75,11 @@ with tf.Session() as sess:
 
     # Training cycle
     for epoch in range(epochs):
+        # n_batches = 5
+        # for batch_i in range(1, n_batches + 1):
         batch_i = 1
         for batch_features, batch_labels in helper.load_preprocess_training_batch(batch_i, batch_size):
             # sess.run(optimizer, feed_dict={x: batch_features, y: batch_labels, keep_prob: keep_probability})
             train_neural_network(sess, optimizer, keep_probability, batch_features, batch_labels)
-            print('Epoch {:>2}, CIFAR-10 Batch {}:  '.format(epoch + 1, batch_i), end='')
-            print_stats(sess, batch_features, batch_labels, cost, accuracy)
+        print('Epoch {:>2}, CIFAR-10 Batch {}:  '.format(epoch + 1, batch_i), end='')
+        print_stats(sess, batch_features, batch_labels, cost, accuracy)
